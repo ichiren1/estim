@@ -1,0 +1,17 @@
+<html>
+<head>
+ <link href='http://fonts.googleapis.com/css?family=Inconsolata' rel='stylesheet' type='text/css'>
+  <link rel='stylesheet' href='css/index.css' type='text/css'>
+  <script type='text/javascript' src='js/jquery-2.1.4.min.js'></script>
+  <script type='text/javascript' src='js/d3.v3.min.js'></script>
+
+  <script type='text/javascript' src='js/index.js'></script>
+</head>
+<body onload="loadGraphData()">
+  <textarea id='edit_area' spellcheck="false"></textarea>
+  <div id="graph_area"></div>
+  <input id="graph_slider" type=range min="0" max="100" value="70" onchange="changeSlider()"/>
+  <span id="search_area"></span>
+  <span id="not_found"></span>
+</body>
+</html>

@@ -1,0 +1,82 @@
+body{
+  background-color: black;
+  margin: 0;
+}
+
+#edit_area{
+  width: 70%;
+  height: 100%;
+  background-color: black;
+  color: white;
+  font-size: 30px;
+  border-color: black;
+  font-family: 'Inconsolata', serif;
+  resize: none;
+  float: left;
+  padding: 10px;
+}
+
+#graph_area{
+  background-color: white;
+  width: 30%;
+  height: 100%;
+  display: inline-block;
+}
+
+#graph_slider{
+  width: 100%;
+}
+
+#search_input{
+  right: 10;
+  top: 10;
+  position: absolute;
+}
+
+#not_found{
+  right: 10;
+  top: 30;
+  position: absolute;
+  background: #fff;
+  font-size: 20;
+}
+
+.string{
+  fill: #2196F3;
+}
+
+.comment{
+  fill: #FFEB3B;
+}
+
+.method{
+  fill: #F44336;
+}
+
+.normal{
+  fill: #4CAF50;
+}
+
+textarea:focus{
+  outline: none !important;
+  border:1px solid red;
+/*  box-shadow: 0 0 10px #719ECE;*/
+}
+
+path.link {
+  fill: none;
+  stroke: #666;
+  stroke-width: 1.5px;
+}
+
+circle {
+/*  fill: #c00;*/
+  stroke: #fff;
+  stroke-width: 1px;
+}
+
+text {
+  fill: #000;
+  font: 12px sans-serif;
+  pointer-events: none;
+}
