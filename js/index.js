@@ -1,10 +1,19 @@
 var graphData;
 var graphDict = new Object();
 var candidate;
+var filteredCandidate;
 var clickedWord;
-var focusWord;
+var focusWord = "";
 var foundWords;
+var filteredFoundWords;
 var preFoundWords;
+var repoList = new Object();
+var repoListDir = "./repolist/"
+var enabledMethod = true;
+var enabledString = true;
+var enabledComment = true;
+var enabledNormal = true;
+var enabledPM = false;
 
 var graphJSON = function() {}
 graphJSON.prototype = {
@@ -14,7 +23,7 @@ graphJSON.prototype = {
 }
 
 var loadGraphData = function(){
-  $.ajax( './js/data.json')
+  $.ajax('./js/data.json')
   .done(function(data){
     graphData = data.links;
     graphData.forEach(function(g){
@@ -88,9 +97,8 @@ var drawGraph = function(graphData, foundWords){
       })
       .on("dblclick", function(d){
         var editContent = $("#edit_area").val();
-        var cursorPos = $("#edit_area").prop("selectionStart");
+        var cursorPos = $("#").prop("selectionStart");
         $("#edit_area").val(editContent.substring(0, cursorPos)+d.name+editContent.substring(cursorPos));
-        console.log();
       })
       .attr("class", function(d){
         return parserWord(d.name);
@@ -125,6 +133,137 @@ var drawGraph = function(graphData, foundWords){
   });
 };
 
+function isDisplay(word){
+  var wordType = parserWord(word);
+  if(wordType == "method"){
+    return enabledMethod;
+  }
+  if(wordType == "string"){
+    return enabledString;
+  }
+  if(wordType == "comment"){
+    return enabledComment;
+  }
+  if(wordType == "normal"){
+    return enabledNormal;
+  }
+  return false;
+}
+
+function getSrcPaths(word){
+  var parent = document.getElementsByClassName('src_search_word');
+  for(var i=0; i<parent.length; i++){
+    $('#'+parent[i].id).css("color", "grey");
+  }
+  $('#'+word).css("color", "white");
+  var filename;
+  if(!word.match("[a-zA-Z]")){
+    filename = "symbols";
+  }else{
+    filename = word.slice(0,2);
+  }
+  $.ajax(repoListDir+filename+".txt")
+  .fail(function(file){
+    $('#source_textarea').val("Not found");
+    return;
+  })
+  .done(function(file){
+    var items = $.grep(file.split('\n'), function(d){
+      if(d != "") return d;
+    });
+    for(var i=0; i<items.length; i++){
+      var item = $.grep(items[i].split(':'), function(d){
+        if(d != "") return d;
+      });
+      repoList[item[0]] = $.grep(item[1].split(','), function(d){
+        if(d != "") return d;
+      });
+    }
+    word = word.replace(" ","");
+    if(repoList[word] == undefined){
+      $('#source_textarea').val("Not found");
+      return;
+    }else{
+      $('#source_textarea').val("");
+    }
+    setSrcPaths(repoList[word].join(','));
+  });
+}
+
+function setSrcPaths(paths){
+  $('#search_paths_tab').empty();
+  paths = $.grep(paths.split(','), function(p){
+    if(p!="") return p;
+  });
+  for(var i=0; i<paths.length; i++){
+    var winpath = $.grep(paths[i].split('\\'),function(f){
+        if(f!="") return f;
+      });
+      var unixpath = $.grep(paths[i].split('/'), function(f){
+        if(f!="") return f;
+      });
+      var filename = (winpath.length > unixpath.length) ? winpath[winpath.length-1]:unixpath[unixpath.length-1];
+      $('#search_paths_tab').append("<div class='src_path' id='s_a"+i+"' onclick='showSource(\""+paths[i].split("\\").join("\\\\")+"\",\"s_a"+i+"\")'>"+(i+1)+"</div");
+      $('#s_a'+i).css("width", (100/paths.length)+"%")
+  }
+}
+
+function getDupSrcPaths(words){
+  var parent = document.getElementsByClassName('src_search_word');
+  for(var i=0; i<parent.length; i++){
+    $('#'+parent[i].id).css("color", "grey");
+  }
+  $('#BOTH').css("color", "white");
+  words = $.grep(words.split(':'), function(w){
+    if(w!= "") return w;
+  });
+  var dupSrcPaths = [];
+  for(var i=0; i<repoList[words[0]].length; i++){
+    dupSrcPaths.push(repoList[words[0]][i]);
+  }
+  for(var i=1; i<words.length; i++){
+    if(repoList[words[i]] == undefined)
+      continue;
+    var tmpDupSrcPaths=[];
+    for(var j=0; j<repoList[words[i]].length; j++){
+      if(dupSrcPaths.indexOf(repoList[words[i]][j]) >=0){
+        tmpDupSrcPaths.push(repoList[words[i]][j]);
+      }
+    }
+    dupSrcPaths = [];
+    for(var j=0; j<tmpDupSrcPaths.length; j++){
+      dupSrcPaths.push(tmpDupSrcPaths[j]);
+    }
+  }
+  if(dupSrcPaths.length == 0){
+    $('#search_paths_tab').empty();
+    $('#source_textarea').val("Not found");
+  }else{
+    setSrcPaths(dupSrcPaths.join(','));
+  }
+}
+
+function showSource(path, elementId){
+  var parent = document.getElementsByClassName('src_path');
+  for(var i=0; i<parent.length; i++){
+    $('#'+parent[i].id).css("color", "grey");
+  }
+  $('#'+elementId).css("color", "white");
+  var winpath = $.grep(path.split('\\'),function(f){
+    if(f!="") return f;
+  });
+  var unixpath = $.grep(path.split('/'), function(f){
+    if(f!="") return f;
+  });
+
+  path = (winpath.length > unixpath.length) ? winpath.slice(1).join('/') : unixpath.slice(1).join('/');
+  $.ajax(repoListDir+path)
+  .done(function(data){
+    $('#source_textarea').val(data);
+  });
+  $('#search_path').text(repoListDir+path);
+}
+
 function setSelectionRange(input, selectionStart, selectionEnd) {
   input.focus();
   input.setSelectionRange(selectionStart, selectionEnd);
@@ -133,7 +272,6 @@ function setSelectionRange(input, selectionStart, selectionEnd) {
 function setCaretToPos (input, pos) {
   setSelectionRange(input, pos, pos);
 }
-
 
 function parserWord(word){
   if(word.match(/^"/)){ //String
@@ -159,6 +297,11 @@ function searchCandidates(){
   var existsDict = new Object();
   for(var i=0; i<graphData.length; i++){
     if(graphData[i].source.name.indexOf(focusWord) >= 0){
+      if(enabledPM){
+        if(graphData[i].source.name.toString() != focusWord.toString()){
+          continue;
+        }
+      }
       var json = new graphJSON();
       json.source = graphData[i].source.name;
       json.target = graphData[i].target.name;
@@ -177,9 +320,9 @@ function searchCandidates(){
     }
   }
   if(candidate.length == 0){
-    $('#not_found').html("<div>Not found</div>");
+    $('#not_found').css("display", "inline");
   }else{
-    $('#not_found').html("");
+    $('#not_found').css("display", "none");
   }
   
   if(preFoundWords == null){
@@ -213,6 +356,20 @@ function findTarget(searchWord, existsDict){
   });
 }
 
+function filterCandidate(){
+  filteredCandidate = [];
+  filteredFoundWords = [];
+  for(var i=0; i<candidate.length; i++){
+    var json = new graphJSON();
+    json.source = candidate[i].source.name;
+    json.target = candidate[i].target.name;
+    if(isDisplay(candidate[i].target.name)){
+      filteredCandidate.push(json);
+      filteredFoundWords.push(candidate[i].target.name);
+    }
+  }
+  drawGraph(filteredCandidate, filteredFoundWords);
+}
 
 function changeSlider(){
   $('#graph_area').css({
@@ -220,6 +377,12 @@ function changeSlider(){
   });
   $('#edit_area').css({
     "width": $('#graph_slider').val()+"%"
+  });
+  $('.source_area').css({
+    "width": $('#graph_slider').val()+"%"
+  });
+  $('#display_item').css({
+    "left": $('#graph_slider').val()+"%"
   });
   foundWords = [];
   searchCandidates();
@@ -281,21 +444,63 @@ $(document).ready(function(){
   $(document).keyup(function(e){
     if(e.ctrlKey && e.shiftKey){
       if(e.keyCode == 70){ //f
-        if($('#search_input').get(0)){
-          $('#search_input').remove();
+        if($('#search_input').css("display")=="none"){
+          $('#search_input').css("display", "inline");
+          $('#search_input').val(focusWord);
         }else{
-          $('#search_area').html("<input type='search' id='search_input'></input>");
+          $('#search_input').css("display", "none");
         }
       }
     }
   });
   
-  $('#search_area').keyup(function(e){
+  $('#search_input').keyup(function(e){
     focusWord = $('#search_input').val();
     if(focusWord.length >= 2){
       searchCandidates();
     }
   });
+  
+  $('#search_words_input').keyup(function(e){
+    $('#search_words_tab').empty();
+    var srcSearchWords = $.grep($('#search_words_input').val().split(' '), function(d){
+      if(d!="") return d;
+    });
+    if(srcSearchWords.length >= 2){
+      srcSearchWords.push("[BOTH]");
+    }
+    for (var i in srcSearchWords){
+      if(srcSearchWords[i]=="[BOTH]"){
+        $('#search_words_tab').append("<div class='src_search_word' id='BOTH' onclick='getDupSrcPaths(\""+srcSearchWords.join(':')+"\");'>[BOTH]</div");
+        continue;
+      }
+      $('#search_words_tab').append("<div class='src_search_word' id='"+srcSearchWords[i]+"' onclick='getSrcPaths(\""+srcSearchWords[i]+" \");'>"+srcSearchWords[i]+"</div");
+      $('#'+srcSearchWords[i]).css("width", (100/srcSearchWords.length)+"%");
+    }
+  });
+  
+  $('#method').change(function(){
+    enabledMethod = $(this).prop('checked');
+    filterCandidate();
+  });
+  $('#string').change(function(){
+    enabledString = $(this).prop('checked');
+    filterCandidate();
+  });
+  $('#comment').change(function(){
+    enabledComment = $(this).prop('checked');
+    filterCandidate();
+  });
+  $('#normal').change(function(){
+    enabledNormal = $(this).prop('checked');
+    filterCandidate();
+  });
+  $('#perfect_matching').change(function(){
+    enabledPM = $(this).prop('checked');
+    console.log(enabledPM);
+    searchCandidates();
+  });
+  
   
   $(window).on("beforeunload",function(e){
     return "Did you save?";

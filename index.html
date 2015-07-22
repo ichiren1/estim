@@ -10,8 +10,20 @@
 <body onload="loadGraphData()">
   <textarea id='edit_area' spellcheck="false"></textarea>
   <div id="graph_area"></div>
+  <div id="display_item">
+    <input type='checkbox' id='method' checked><span class='method'>M</span></input>
+    <input type='checkbox' id='string' checked><span class='string'>S</span></input>
+    <input type='checkbox' id='comment' checked><span class='comment'>C</span></input>
+    <input type='checkbox' id='normal' checked><span class='normal'>N</span></input>
+    <input type='checkbox' id='perfect_matching'><span>PM</span></input>
+  </div>
+  <textarea id='source_textarea' class="source_area" spellcheck="false"></textarea>
+  <input type="search" id="search_words_input" class="source_area"/>
+  <div id="search_words_tab" class="source_area"></div>
+  <div id="search_paths_tab" class="source_area"></div>
+  <div id="search_path" class='source_area'></div>
   <input id="graph_slider" type=range min="0" max="100" value="70" onchange="changeSlider()"/>
-  <span id="search_area"></span>
-  <span id="not_found"></span>
+  <input type='search' id='search_input'></input>
+  <div id="not_found">Not found</div>
 </body>
 </html>
