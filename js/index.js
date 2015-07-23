@@ -2,11 +2,11 @@ var graphData;
 var graphDict = new Object();
 var candidate;
 var filteredCandidate;
-var clickedWord;
 var focusWord = "";
 var foundWords;
 var filteredFoundWords;
 var preFoundWords;
+var clickedWord;
 var repoList = new Object();
 var repoListDir = "./repolist/"
 var enabledMethod = true;
@@ -27,14 +27,14 @@ var loadGraphData = function(){
   .done(function(data){
     graphData = data.links;
     graphData.forEach(function(g){
-      if(!graphDict.hasOwnProperty(g.source))
+      if(!graphDict.hasOwnProperty(g.source)) //check key
         graphDict[g.source] = [];
       graphDict[g.source].push(g.target);
     });
     drawGraph(graphData, []);
     $('#graph_area').empty();
   });
-};
+}; // -> drawGraph
 
 var drawGraph = function(graphData, foundWords){
   $('#graph_area').empty();
@@ -97,8 +97,8 @@ var drawGraph = function(graphData, foundWords){
       })
       .on("dblclick", function(d){
         var editContent = $("#edit_area").val();
-        var cursorPos = $("#").prop("selectionStart");
-        $("#edit_area").val(editContent.substring(0, cursorPos)+d.name+editContent.substring(cursorPos));
+        var cursorPos = $("#edit_area").prop("selectionStart");
+        $("#edit_area").val(editContent.substring(0, cursorPos)+" "+d.name+editContent.substring(cursorPos));
       })
       .attr("class", function(d){
         return parserWord(d.name);
@@ -148,9 +148,9 @@ function isDisplay(word){
     return enabledNormal;
   }
   return false;
-}
+} // -> parserWord
 
-function getSrcPaths(word){
+function getSrcPaths(word){ 
   var parent = document.getElementsByClassName('src_search_word');
   for(var i=0; i<parent.length; i++){
     $('#'+parent[i].id).css("color", "grey");
@@ -181,6 +181,7 @@ function getSrcPaths(word){
     }
     word = word.replace(" ","");
     if(repoList[word] == undefined){
+      $('#search_paths_tab').empty();
       $('#source_textarea').val("Not found");
       return;
     }else{
@@ -188,7 +189,7 @@ function getSrcPaths(word){
     }
     setSrcPaths(repoList[word].join(','));
   });
-}
+} // -> setSrcPaths
 
 function setSrcPaths(paths){
   $('#search_paths_tab').empty();
@@ -241,7 +242,7 @@ function getDupSrcPaths(words){
   }else{
     setSrcPaths(dupSrcPaths.join(','));
   }
-}
+} // -> setSrcPaths
 
 function showSource(path, elementId){
   var parent = document.getElementsByClassName('src_path');
@@ -271,7 +272,7 @@ function setSelectionRange(input, selectionStart, selectionEnd) {
 
 function setCaretToPos (input, pos) {
   setSelectionRange(input, pos, pos);
-}
+} // -> setSelectionRange
 
 function parserWord(word){
   if(word.match(/^"/)){ //String
@@ -315,7 +316,7 @@ function searchCandidates(){
         break;
       }
       if(candidate.length < 50){
-        findTarget(json.target, existsDict);
+        findTargetR(json.target, existsDict);
       }
     }
   }
@@ -333,9 +334,9 @@ function searchCandidates(){
     }
   }
   preFoundWords = foundWords;
-}
+} // -> findTargetR -> drawGraph
 
-function findTarget(searchWord, existsDict){
+function findTargetR(searchWord, existsDict){
   if(!graphDict.hasOwnProperty(searchWord)){
     return;
   }
@@ -351,7 +352,7 @@ function findTarget(searchWord, existsDict){
       existsDict[searchWord].push(g);
       candidate.push(json);
       if (candidate.length < 10)
-        findTarget(json.target, existsDict); //Recurrence
+        findTargetR(json.target, existsDict); //Recurrence
     }
   });
 }
@@ -497,7 +498,6 @@ $(document).ready(function(){
   });
   $('#perfect_matching').change(function(){
     enabledPM = $(this).prop('checked');
-    console.log(enabledPM);
     searchCandidates();
   });
   
