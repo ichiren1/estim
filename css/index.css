@@ -67,7 +67,7 @@ body{
   top: 7%;
   height: 3%;
 }
-#source_textarea{
+#source_text{
   height: 90%;
   top: 10%;
   background-color: black;
@@ -77,6 +77,12 @@ body{
   font-family: 'Inconsolata', serif;
   resize: none;
   padding: 10px;
+}
+pre {
+  overflow: auto;
+  white-space: pre-wrap;
+  word-wrap: break-all;
+  margin: 0;
 }
 .src_search_word{
   text-align: center;
@@ -107,6 +113,10 @@ body{
   font-size: 20;
   text-align: center;
   word-wrap: break-word;
+}
+#search_word{
+  color: black;
+  background-color: yellow;
 }
 
 .string{

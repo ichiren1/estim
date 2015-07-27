@@ -14,6 +14,7 @@ var enabledString = true;
 var enabledComment = true;
 var enabledNormal = true;
 var enabledPM = false;
+var srcSearchWords;
 
 var graphJSON = function() {}
 graphJSON.prototype = {
@@ -120,7 +121,6 @@ var drawGraph = function(graphData, foundWords){
         return "normal";
       });
   
-  
   force.on("tick", function(){
       path.attr("d", function(d) {
           var dx = d.target.x - d.source.x, dy = d.target.y - d.source.y, dr = Math.sqrt(dx * dx + dy * dy);
@@ -164,10 +164,11 @@ function getSrcPaths(word){
   }
   $.ajax(repoListDir+filename+".txt")
   .fail(function(file){
-    $('#source_textarea').val("Not found");
+    $('#source_text').text("Not found");
     return;
   })
   .done(function(file){
+    console.log(file);
     var items = $.grep(file.split('\n'), function(d){
       if(d != "") return d;
     });
@@ -175,17 +176,22 @@ function getSrcPaths(word){
       var item = $.grep(items[i].split(':'), function(d){
         if(d != "") return d;
       });
+      var count = 0;
+      console.log(item[1]);
       repoList[item[0]] = $.grep(item[1].split(','), function(d){
-        if(d != "") return d;
+        if(d != "" && count < 20){
+          count++;
+          return d;
+        }
       });
     }
     word = word.replace(" ","");
     if(repoList[word] == undefined){
       $('#search_paths_tab').empty();
-      $('#source_textarea').val("Not found");
+      $('#source_text').text("Not found");
       return;
     }else{
-      $('#source_textarea').val("");
+      $('#source_text').text("");
     }
     setSrcPaths(repoList[word].join(','));
   });
@@ -238,7 +244,7 @@ function getDupSrcPaths(words){
   }
   if(dupSrcPaths.length == 0){
     $('#search_paths_tab').empty();
-    $('#source_textarea').val("Not found");
+    $('#source_text').text("Not found");
   }else{
     setSrcPaths(dupSrcPaths.join(','));
   }
@@ -260,7 +266,11 @@ function showSource(path, elementId){
   path = (winpath.length > unixpath.length) ? winpath.slice(1).join('/') : unixpath.slice(1).join('/');
   $.ajax(repoListDir+path)
   .done(function(data){
-    $('#source_textarea').val(data);
+    var d;
+    for(var i=0; i<srcSearchWords.length; i++){
+      d = data.split(srcSearchWords[i]).join("<span id='search_word'>"+srcSearchWords[i]+"</span>");
+    }
+    $('#source_text').html(d);
   });
   $('#search_path').text(repoListDir+path);
 }
@@ -315,7 +325,7 @@ function searchCandidates(){
       if(candidate.length > 300){
         break;
       }
-      if(candidate.length < 50){
+      if(candidate.length < 100){
         findTargetR(json.target, existsDict);
       }
     }
@@ -351,7 +361,7 @@ function findTargetR(searchWord, existsDict){
       json.target = g;
       existsDict[searchWord].push(g);
       candidate.push(json);
-      if (candidate.length < 10)
+      if (candidate.length < 100)
         findTargetR(json.target, existsDict); //Recurrence
     }
   });
@@ -464,7 +474,7 @@ $(document).ready(function(){
   
   $('#search_words_input').keyup(function(e){
     $('#search_words_tab').empty();
-    var srcSearchWords = $.grep($('#search_words_input').val().split(' '), function(d){
+    srcSearchWords = $.grep($('#search_words_input').val().split(' '), function(d){
       if(d!="") return d;
     });
     if(srcSearchWords.length >= 2){
@@ -500,7 +510,6 @@ $(document).ready(function(){
     enabledPM = $(this).prop('checked');
     searchCandidates();
   });
-  
   
   $(window).on("beforeunload",function(e){
     return "Did you save?";
